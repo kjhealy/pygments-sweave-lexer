@@ -17,6 +17,7 @@ from pygments.token import Comment, String, Punctuation, Keyword, Name, \
     Operator, Number, Text, Generic
 
 from pygments.lexers.agile import PythonLexer
+from pygments.lexers.text import TexLexer
 
 __all__ = ['MuPADLexer', 'MatlabLexer', 'MatlabSessionLexer', 'NumPyLexer',
            'RConsoleLexer', 'SLexer', 'RnwLexer', 'SweaveLexer']
