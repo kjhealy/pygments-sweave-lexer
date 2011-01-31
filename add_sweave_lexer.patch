@@ -1,0 +1,136 @@
+From a19b41e5e4f06716f2fa08b6740de70b317a9e53 Mon Sep 17 00:00:00 2001
+From: Kieran Healy <kjhealy@gmail.com>
+Date: Mon, 31 Jan 2011 14:09:44 -0500
+Subject: [PATCH] patched math.py with sweave lexer
+
+---
+ math.py |   97 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
+ 1 files changed, 94 insertions(+), 3 deletions(-)
+
+diff --git a/math.py b/math.py
+index 5f00c08..72b3954 100755
+--- a/math.py
++++ b/math.py
+@@ -1,6 +1,6 @@
+ # -*- coding: utf-8 -*-
+ """
+-    pygments.lexers.math
++    pygments.lexers.math (sweave patched)
+     ~~~~~~~~~~~~~~~~~~~~
+ 
+     Lexers for math languages.
+@@ -11,14 +11,15 @@
+ 
+ import re
+ 
+-from pygments.lexer import Lexer, RegexLexer, bygroups, include, do_insertions
++from pygments.lexer import Lexer, RegexLexer, bygroups, include, do_insertions, \
++     DelegatingLexer
+ from pygments.token import Comment, String, Punctuation, Keyword, Name, \
+     Operator, Number, Text, Generic
+ 
+ from pygments.lexers.agile import PythonLexer
+ 
+ __all__ = ['MuPADLexer', 'MatlabLexer', 'MatlabSessionLexer', 'NumPyLexer',
+-           'RConsoleLexer', 'SLexer']
++           'RConsoleLexer', 'SLexer', 'RnwLexer', 'SweaveLexer']
+ 
+ 
+ class MuPADLexer(RegexLexer):
+@@ -459,3 +460,93 @@ class SLexer(RegexLexer):
+ 
+     def analyse_text(text):
+         return '<-' in text
++
++## RnwLexer (can't use SLexer because of its handling of quotes)
++class RnwLexer(RegexLexer):
++    """
++    For S, S-plus, and R source code in Sweave documents.
++
++    *Kieran Healy*
++    """
++
++    name = 'Rnw'
++    aliases = ['rnw']
++    filenames = ['*.r']
++    mimetypes = ['text/S-plus', 'text/S', 'text/R']
++
++    tokens = {
++        's-header': [
++            (r'(<<.*?>>=)', Keyword.Reserved), 
++        ],
++        's-closer': [
++            (r'(^@)', Keyword.Reserved),
++        ],
++        'comments': [
++            (r'#.*$', Comment.Single),
++        ],
++        'valid_name': [
++            (r'[a-zA-Z][0-9a-zA-Z\._]+', Text),
++            (r'`.+`', String.Backtick),
++        ],
++        'punctuation': [
++            (r'\[|\]|\[\[|\]\]|\$|\(|\)|@|:::?|;|,', Punctuation),
++        ],
++        'keywords': [
++            (r'for(?=\s*\()|while(?=\s*\()|if(?=\s*\()|(?<=\s)else|'
++             r'(?<=\s)break(?=;|$)|return(?=\s*\()|function(?=\s*\()',
++             Keyword.Reserved)
++        ],
++        'operators': [
++            (r'<-|-|==|<=|>=|<|>|&&|&|!=|\|\|?', Operator),
++            (r'\*|\+|\^|/|%%|%/%|=', Operator),
++            (r'%in%|%*%', Operator)
++        ],
++        'builtin_symbols': [
++            (r'(NULL|NA|TRUE|FALSE|NaN)\b', Keyword.Constant),
++            (r'(T|F)\b', Keyword.Variable),
++        ],
++        'numbers': [
++            (r'(?<![0-9a-zA-Z\)\}\]`\"])(?=\s*)[-\+]?[0-9]+'
++             r'(\.[0-9]*)?(E[0-9][-\+]?(\.[0-9]*)?)?', Number),
++            (r'\.[0-9]*(E[0-9][-\+]?(\.[0-9]*)?)?', Number),
++        ],
++        'statements': [
++            include('s-header'),
++            include('s-closer'),
++            include('comments'),
++            # whitespaces
++            (r'\s+', Text),
++            # (r'\'', String, 'string_squote'),
++            # (r'\"', String, 'string_dquote'),
++            include('builtin_symbols'),
++            include('numbers'),
++            include('keywords'),
++            include('punctuation'),
++            include('operators'),
++            include('valid_name'),
++        ],
++
++        'root': [
++            include('statements'),
++            # blocks:
++            (r'\{|\}', Punctuation),
++            (r'.', Text),
++        ],
++    }
++
++    def analyse_text(text):
++        return '<-' in text       
++
++## Sweave
++class SweaveLexer(DelegatingLexer):
++    """
++    Lexer for Sweave documents (S/R code and LaTeX).
++    """
++
++    name = 'Sweave'
++    aliases = ['sweave']
++    filenames = ['*.Snw', '*.Rnw', '*.snw', '*.rnw']
++    mimetypes = ['text/x-sweave']
++    
++    def __init__(self, **options):
++        super(SweaveLexer, self).__init__(RnwLexer, TexLexer, Text, **options)
+-- 
+1.7.3.5
+
