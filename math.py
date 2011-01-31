@@ -3,8 +3,15 @@
     An Sweave lexer for Pygments
     ~~~~~~~~~~~~~~~~~~~~
     
-    This stuff goes into pygments.lexers.math
-    I should make a proper patch file.
+    This stuff goes into math.py in
+    Pygments-1.4-py2.6.egg/pygments/lexers/math.py
+    After you install it, you run
+    > python _mapping.py
+    from inside the lexers directory.
+
+    I should make a proper patch file, or learn how to
+    use python entry points so that pygments sees it
+    automatically.
     
 """
 
