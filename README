@@ -1,4 +1,4 @@
 A hacked-on Sweave lexer for Pygments. 
 
 TODO:
-	- Use entry points instead of manually adding to math.py
+	- Use entry points instead of patching math.py
